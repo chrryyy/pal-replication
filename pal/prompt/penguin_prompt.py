@@ -27,22 +27,27 @@ James, 12, 90, 12
 How many penguins are less than 8 years old?
 """
 
-# Put the penguins into a list.
-penguins = []
-penguins.append(('Louis', 7, 50, 11))
-penguins.append(('Bernard', 5, 80, 13))
-penguins.append(('Vincent', 9, 60, 11))
-penguins.append(('Gwen', 8, 70, 15))
+# solution in python
 
-# Add penguin James.
-penguins.append(('James', 12, 90, 12))
+def solution():
+    """ How many penguins are less than 8 years old?"""
+    # Put the penguins into a list.
+    penguins = []
+    penguins.append(('Louis', 7, 50, 11))
+    penguins.append(('Bernard', 5, 80, 13))
+    penguins.append(('Vincent', 9, 60, 11))
+    penguins.append(('Gwen', 8, 70, 15))
 
-# Find penguins under 8 years old.
-penguins_under_8_years_old = [penguin for penguin in penguins if penguin[1] < 8]
+    # Add penguin James.
+    penguins.append(('James', 12, 90, 12))
 
-# Count number of perguins under 8.
-num_penguin_under_8 = len(penguins_under_8_years_old)
-answer = num_penguin_under_8
+    # Find penguins under 8 years old.
+    penguins_under_8_years_old = [penguin for penguin in penguins if penguin[1] < 8]
+
+    # Count number of penguins under 8.
+    num_penguin_under_8 = len(penguins_under_8_years_old)
+    answer = num_penguin_under_8
+    return answer
 
 
 """
@@ -56,19 +61,24 @@ For example: the age of Louis is 7, the weight of Gwen is 15 kg, the height of B
 Which is the youngest penguin?
 """
 
-# Put the penguins into a list.
-penguins = []
-penguins.append(('Louis', 7, 50, 11))
-penguins.append(('Bernard', 5, 80, 13))
-penguins.append(('Vincent', 9, 60, 11))
-penguins.append(('Gwen', 8, 70, 15))
+# solution in python
 
-# Sort the penguins by age.
-penguins = sorted(penguins, key=lambda x: x[1])
+def solution():
+    """ Which is the youngest penguin? """
+    # Put the penguins into a list.
+    penguins = []
+    penguins.append(('Louis', 7, 50, 11))
+    penguins.append(('Bernard', 5, 80, 13))
+    penguins.append(('Vincent', 9, 60, 11))
+    penguins.append(('Gwen', 8, 70, 15))
 
-# Get the youngest penguin's name.
-youngest_penguin_name = penguins[0][0]
-answer = youngest_penguin_name
+    # Sort the penguins by age.
+    penguins = sorted(penguins, key=lambda x: x[1])
+
+    # Get the youngest penguin's name.
+    youngest_penguin_name = penguins[0][0]
+    answer = youngest_penguin_name
+    return answer
 
 
 """
@@ -82,22 +92,27 @@ For example: the age of Louis is 7, the weight of Gwen is 15 kg, the height of B
 What is the name of the second penguin sorted by alphabetic order?
 """
 
-# Put the penguins into a list.
-penguins = []
-penguins.append(('Louis', 7, 50, 11))
-penguins.append(('Bernard', 5, 80, 13))
-penguins.append(('Vincent', 9, 60, 11))
-penguins.append(('Gwen', 8, 70, 15))
+# solution in python
 
-# Sort penguins by alphabetic order.
-penguins_alphabetic = sorted(penguins, key=lambda x: x[0])
+def solution():
+    """What is the name of the second penguin sorted by alphabetic order?"""
+    # Put the penguins into a list.
+    penguins = []
+    penguins.append(('Louis', 7, 50, 11))
+    penguins.append(('Bernard', 5, 80, 13))
+    penguins.append(('Vincent', 9, 60, 11))
+    penguins.append(('Gwen', 8, 70, 15))
 
-# Get the second penguin sorted by alphabetic order.
-second_penguin_name = penguins_alphabetic[1][0]
-answer = second_penguin_name
+    # Sort penguins by alphabetic order.
+    penguins_alphabetic = sorted(penguins, key=lambda x: x[0])
+
+    # Get the second penguin sorted by alphabetic order.
+    second_penguin_name = penguins_alphabetic[1][0]
+    answer = second_penguin_name
+    return answer
 
 
-"""
-{question}
-"""
-'''.strip() + '\n'
+Q: {question}
+
+# solution in Python:
+'''.strip() + '\n\n\n'

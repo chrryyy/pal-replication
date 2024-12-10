@@ -19,7 +19,28 @@ from typing import Any, Callable, List, Optional
 from collections import Counter
 
 from .runtime import GenericRuntime
-from .backend import call_gpt, call_chat_gpt
+from .backend import call_hf, call_chat_gpt
+
+from transformers import pipeline, AutoTokenizer, AutoConfig, AutoModel
+import torch
+import gc
+import re
+import os
+
+gc.collect()
+torch.cuda.empty_cache()
+
+from transformers import logging
+logging.set_verbosity_info()
+
+# cache_dir = "/scratch/eqk9vb/.cache/huggingface/hub"
+# config = AutoConfig.from_pretrained("codellama/CodeLlama-70b-hf", cache_dir=cache_dir)
+# tokenizer = AutoTokenizer.from_pretrained("codellama/CodeLlama-70b-hf", cache_dir=cache_dir)
+# model = AutoModel.from_pretrained("codellama/CodeLlama-70b-hf", device_map="auto", cache_dir=cache_dir)
+# pipe = pipeline("text-generation", model="codellama/CodeLlama-70b-hf", device_map="auto", cache_dir=cache_dir)
+
+tokenizer = AutoTokenizer.from_pretrained("codellama/CodeLlama-7b-Instruct-hf")
+pipe = pipeline("text-generation", model="codellama/CodeLlama-7b-Instruct-hf", device_map="auto")
 
 
 class timeout:
@@ -60,7 +81,7 @@ class TextInterface:
         return last_line[len(self.answer_prefix):].strip()
     
     def run(self, prompt, temperature=0.0, top_p=1.0, majority_at=None, max_tokens=512):
-        gen = call_gpt(prompt, model=self.model, stop=self.stop, 
+        gen = call_hf(prompt, pipe,
             temperature=temperature, top_p=top_p, max_tokens=max_tokens, majority_at=majority_at)
         self.history.append(gen)
         return self.extract_answer(gen)
@@ -91,40 +112,61 @@ class ProgramInterface:
     def clear_history(self):
         self.history = []
     
-    def process_generation_to_code(self, gens: str):
-        return [g.split('\n') for g in gens]
+    def process_generation_to_code(self, gens: list):
+        print("IN GENERATION TO CODE")
+        generated_text = gens[0]['generated_text']
+        last_q_index = generated_text.rfind("Q:", 0, len(generated_text) - 1)
+        print(generated_text[int(last_q_index):])
+        gen_response = generated_text[int(last_q_index):].strip()
+        print(gen_response)
+        gen_code = gen_response[int(gen_response.find('"""\n'))+3:int(gen_response.find('\n\n\n\n\n\nQ:'))].strip()
+        print("PRINTING CODE")
+        print(gen_code)
+        code = [line for line in gen_code.split('\n')]
+        code = [re.sub(r'\s+', ' ', line).strip() for line in code]
+        # code = [[line] for line in code]
+        return code
     
     def generate(self, prompt: str, temperature: float =0.0, top_p: float =1.0, 
             max_tokens: int =512, majority_at: int =None, ):
-        gens = call_gpt(prompt, model=self.model, stop=self.stop, 
+        gens = call_hf(prompt, pipe,
             temperature=temperature, top_p=top_p, max_tokens=max_tokens, majority_at=majority_at, )
         if self.verbose:
             print(gens)
         code = self.process_generation_to_code(gens)
         self.history.append(gens)
-        return code
+        return gens
     
     def execute(self, code: Optional[List[str]] = None):
+        print("EXECUTING CODE")
         code = code if code else self.code
-        if self.get_answer_from_stdout:
-            program_io = io.StringIO()
-            with redirect_stdout(program_io):
-                self.runtime.exec_code('\n'.join(code))
-            program_io.seek(0)
-            return program_io.readlines()[-1]
-        elif self.answer_symbol:
-            self.runtime.exec_code('\n'.join(code))
-            return self.runtime._global_vars[self.answer_symbol]
-        elif self.answer_expr:
-            self.runtime.exec_code('\n'.join(code))
-            return self.runtime.eval_code(self.answer_expr)
-        else:
-            self.runtime.exec_code('\n'.join(code[:-1]))
-            return self.runtime.eval_code(code[-1])
+        print(code)
+        # if self.get_answer_from_stdout:
+        #     print("IN STDOUT")
+        #     program_io = io.StringIO()
+        #     with redirect_stdout(program_io):
+        #         self.runtime.exec_code(code)
+        #     program_io.seek(0)
+        #     return program_io.readlines()[-1]
+        # elif self.answer_symbol:
+        #     print("IN SYMBOL")
+        #     self.runtime.exec_code(code)
+        #     return self.runtime._global_vars[self.answer_symbol]
+        # elif self.answer_expr:
+        #     print("IN EXPRE")
+        #     self.runtime.exec_code(code)
+        #     return self.runtime.eval_code(self.answer_expr)
+        # else:
+        print("EXEC")
+        self.runtime.exec_code(code)
+        print("READY FOR EVAL")
+        return self.runtime.eval_code(code)
     
     def run(self, prompt: str, time_out: float =10, temperature: float =0.0, top_p: float =1.0, 
             max_tokens: int =512, majority_at: int =None):
         code_snippets = self.generate(prompt, majority_at=majority_at, temperature=temperature, top_p=top_p, max_tokens=max_tokens)
+        print("PRINTING CODE SNIPPETS")
+        print(code_snippets)
         
         results = []
         for code in code_snippets:
@@ -135,6 +177,7 @@ class ProgramInterface:
                     print(e)
                     continue
                 results.append(exec_result)
+            results.append(code_snippets)
         
         if len(results) == 0:
             print('No results was produced. A common reason is that the generated code snippet is not valid or did not return any results.')
